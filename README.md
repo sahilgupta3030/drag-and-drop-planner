@@ -1,5 +1,5 @@
 # Project Name
-## Learning Typescript with Maximilian Schwarzmuller.
+## drag-and-drop-planner
 
 ### Compiling
 - Compile once:

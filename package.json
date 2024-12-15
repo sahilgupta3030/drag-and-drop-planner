@@ -4,13 +4,13 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "lite-server"
+    "dev": "browser-sync start --server --files 'index.html, css/*.css, js/*.js'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "lite-server": "^2.6.1"
+    "browser-sync": "^3.0.3"
   }
 }
