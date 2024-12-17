@@ -15,9 +15,18 @@ class Project {
         this.status = status;
     }
 }
-class ProjectState {
+class State {
     constructor() {
         this.listeners = []; // List of listeners waiting for data changes
+    }
+    // Method to add a listener that will be notified on project changes
+    addListener(listenerFunction) {
+        this.listeners.push(listenerFunction);
+    }
+}
+class ProjectState extends State {
+    constructor() {
+        super();
         this.projects = []; // Array to store projects
     }
     // Singleton pattern to ensure only one instance of ProjectState
@@ -26,10 +35,6 @@ class ProjectState {
             return this.instance;
         this.instance = new ProjectState();
         return this.instance;
-    }
-    // Method to add a listener that will be notified on project changes
-    addListener(listenerFunction) {
-        this.listeners.push(listenerFunction);
     }
     // Method to add a new project and notify all listeners
     addProject(title, description, numOfPeople) {
@@ -63,17 +68,32 @@ function validate(validatableInput) {
     }
     return isValid;
 }
-// Class for handling Project List UI (Active or Finished Projects)
-class ProjectList {
-    constructor(type) {
-        this.type = type;
-        this.templateElement = document.getElementById('project-list');
-        this.hostElement = document.getElementById('app');
-        this.assignedProjects = [];
-        // Import the template and attach it to the DOM
+// Component Base Class
+class Component {
+    constructor(templateId, hostElementId, insertAtStart, newElementId) {
+        this.templateElement = document.getElementById(templateId);
+        this.hostElement = document.getElementById(hostElementId);
         const importedNode = document.importNode(this.templateElement.content, true);
         this.element = importedNode.firstElementChild;
-        this.element.id = `${this.type}-projects`;
+        if (newElementId) {
+            this.element.id = newElementId;
+        }
+        this.attach(insertAtStart);
+    }
+    attach(insertAtBeginning) {
+        this.hostElement.insertAdjacentElement(insertAtBeginning ? 'afterbegin' : 'beforeend', this.element);
+    }
+}
+// Class for handling Project List
+class ProjectList extends Component {
+    constructor(type) {
+        super('project-list', 'app', false, `${type}-projects`);
+        this.type = type;
+        this.assignedProjects = [];
+        this.configure();
+        this.renderContent();
+    }
+    configure() {
         // Listen for updates from ProjectState and update the assigned projects
         projectState.addListener((projects) => {
             const relevantProjects = projects.filter(prj => {
@@ -85,8 +105,12 @@ class ProjectList {
             this.assignedProjects = relevantProjects;
             this.renderProjects();
         });
-        this.attach();
-        this.renderContent();
+    }
+    // Sets the content (header and list ID) of the project list
+    renderContent() {
+        const listId = `${this.type}-projects-list`;
+        this.element.querySelector('h2').textContent = this.type.toUpperCase() + ' PROJECTS';
+        this.element.querySelector('ul').id = listId;
     }
     // Renders the list of projects in the UI
     renderProjects() {
@@ -99,32 +123,22 @@ class ProjectList {
             listElement.appendChild(listItem);
         }
     }
-    // Sets the content (header and list ID) of the project list
-    renderContent() {
-        const listId = `${this.type}-projects-list`;
-        this.element.querySelector('h2').textContent = this.type.toUpperCase() + ' PROJECTS';
-        this.element.querySelector('ul').id = listId;
-    }
-    // Attach the project list element to the DOM
-    attach() {
-        this.hostElement.insertAdjacentElement('beforeend', this.element);
-    }
 }
 // Class for handling Project Input UI (Form for adding new projects)
-class ProjectInput {
+class ProjectInput extends Component {
     constructor() {
-        this.templateElement = document.getElementById('project-input');
-        this.hostElement = document.getElementById('app');
-        const importedNode = document.importNode(this.templateElement.content, true);
-        this.element = importedNode.firstElementChild;
-        this.element.id = 'user-input';
+        super('project-input', 'app', true, 'user-input');
         // Get references to form input elements
         this.titleInputElement = this.element.querySelector('#title');
         this.descriptionInputElement = this.element.querySelector('#description');
         this.peopleInputElement = this.element.querySelector('#people');
         this.configure();
-        this.attach();
     }
+    // Configures event listeners for the form
+    configure() {
+        this.element.addEventListener('submit', this.submitHandler.bind(this));
+    }
+    renderContent() { }
     // Gathers and validates user input from the form
     gatherUserInput() {
         const enteredTitle = this.titleInputElement.value;
@@ -173,14 +187,6 @@ class ProjectInput {
             projectState.addProject(title, desc, people);
             this.clearInputs();
         }
-    }
-    // Configures event listeners for the form
-    configure() {
-        this.element.addEventListener('submit', this.submitHandler.bind(this));
-    }
-    // Attach the input form element to the DOM
-    attach() {
-        this.hostElement.insertAdjacentElement('afterbegin', this.element);
     }
 }
 // Create instances of the classes for input and project lists
