@@ -106,7 +106,13 @@ class ProjectList {
 
         // Listen for updates from ProjectState and update the assigned projects
         projectState.addListener((projects: Project[]) => {
-            this.assignedProjects = projects;
+            const relevantProjects = projects.filter(prj => {
+                if (this.type === 'active') {
+                    return prj.status === ProjectStatus.Active;
+                }
+                return prj.status === ProjectStatus.Finished;
+            });
+            this.assignedProjects = relevantProjects;
             this.renderProjects();
         });
 
@@ -116,14 +122,13 @@ class ProjectList {
 
     // Renders the list of projects in the UI
     private renderProjects() {
-        const listEl = document.getElementById(
-            `${this.type}-projects-list`
-        )! as HTMLUListElement;
+        const listElement = document.getElementById(`${this.type}-projects-list`)! as HTMLUListElement;
         // Display each project title in a list item
-        for (const prjItem of this.assignedProjects) {
+        listElement.innerHTML = '';
+        for (const projectItem of this.assignedProjects) {
             const listItem = document.createElement('li');
-            listItem.textContent = prjItem.title;
-            listEl.appendChild(listItem);
+            listItem.textContent = projectItem.title;
+            listElement.appendChild(listItem);
         }
     }
 
