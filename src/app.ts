@@ -1,13 +1,14 @@
 // Drag & Drop Interfaces
 interface Draggable {
-    dragStartHandler(event: DragEvent): void;
-    dragEndHandler(event: DragEvent): void;
+    dragStartHandler(event: DragEvent): void; // Triggered when dragging starts
+    dragEndHandler(event: DragEvent): void;   // Triggered when dragging ends
 }
 
+// Interface for drop targets
 interface DragTarget {
-    dragOverHandler(event: DragEvent): void;
-    dropHandler(event: DragEvent): void;
-    dragLeaveHandler(event: DragEvent): void;
+    dragOverHandler(event: DragEvent): void;  // Triggered when an item is dragged over the target
+    dropHandler(event: DragEvent): void;      // Triggered when the item is dropped on the target
+    dragLeaveHandler(event: DragEvent): void; // Triggered when the item leaves the target
 }
 
 // Enum: Active or Finished
@@ -63,6 +64,18 @@ class ProjectState extends State<Project> {
             ProjectStatus.Active
         );
         this.projects.push(newProject);
+        this.updateListeners();
+    }
+
+    moveProject(projectId: string, newStatus: ProjectStatus) {
+        const project = this.projects.find(prj => prj.id === projectId);
+        if (project && project.status !== newStatus) {
+            project.status = newStatus;
+        }
+        this.updateListeners();
+    }
+
+    private updateListeners() {
         // Notify all listeners with the updated project list
         for (const listenerFunction of this.listeners) {
             listenerFunction(this.projects.slice());
@@ -130,7 +143,7 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
             this.element.id = newElementId;
         }
 
-        this.attach(insertAtStart);
+        this.attach(insertAtStart); // Attach element to the DOM
     }
 
     private attach(insertAtBeginning: boolean) {
@@ -164,7 +177,8 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement>
     }
 
     dragStartHandler(event: DragEvent): void {
-        console.log(event);
+        event.dataTransfer!.setData('text/plain', this.project.id);
+        event.dataTransfer!.effectAllowed = 'move';
     }
 
     dragEndHandler(_: DragEvent): void {
@@ -184,7 +198,8 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement>
 }
 
 // Class for handling Project List
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+class ProjectList extends Component<HTMLDivElement, HTMLElement>
+    implements DragTarget {
     assignedProjects: Project[];
 
     constructor(private type: 'active' | 'finished') {
@@ -195,7 +210,32 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
         this.renderContent();
     }
 
+    dragOverHandler(event: DragEvent): void {
+        if (event.dataTransfer && event.dataTransfer.types[0] === 'text/plain') {
+            event.preventDefault();
+            const listElement = this.element.querySelector('ul')!;
+            listElement.classList.add('droppable'); // Add drop target style
+        }
+    }
+
+    dropHandler(event: DragEvent): void {
+        const projId = event.dataTransfer!.getData('text/plain');
+        projectState.moveProject(projId, this.type === 'active' ? ProjectStatus.Active : ProjectStatus.Finished)
+        // const listElement = this.element.querySelector('ul')!;
+        // listElement.classList.remove('droppable'); // Remove drop target style
+    }
+
+    dragLeaveHandler(_: DragEvent): void {
+        const listElement = this.element.querySelector('ul')!;
+        listElement.classList.remove('droppable'); // Remove drop target style
+    }
+
+
     configure() {
+        this.element.addEventListener('dragover', this.dragOverHandler.bind(this));
+        this.element.addEventListener('dragleave', this.dragLeaveHandler.bind(this));
+        this.element.addEventListener('drop', this.dropHandler.bind(this));
+
         // Listen for updates from ProjectState and update the assigned projects
         projectState.addListener((projects: Project[]) => {
             const relevantProjects = projects.filter(prj => {
@@ -297,12 +337,11 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
     // Handles the form submission and adds the new project to the state
     private submitHandler(event: Event) {
         event.preventDefault();
-        const userInput = this.gatherUserInput();
+        const userInput = this.gatherUserInput(); // Gather input
         if (Array.isArray(userInput)) {
             const [title, desc, people] = userInput;
-            console.log(title, desc, people);
-            projectState.addProject(title, desc, people);
-            this.clearInputs();
+            projectState.addProject(title, desc, people); // Add new project
+            this.clearInputs(); // Clear the form inputs
         }
     }
 }
