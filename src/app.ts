@@ -1,3 +1,15 @@
+// Drag & Drop Interfaces
+interface Draggable {
+    dragStartHandler(event: DragEvent): void;
+    dragEndHandler(event: DragEvent): void;
+}
+
+interface DragTarget {
+    dragOverHandler(event: DragEvent): void;
+    dropHandler(event: DragEvent): void;
+    dragLeaveHandler(event: DragEvent): void;
+}
+
 // Enum: Active or Finished
 enum ProjectStatus {
     Active,
@@ -40,8 +52,6 @@ class ProjectState extends State<Project> {
         this.instance = new ProjectState();
         return this.instance;
     }
-
-
 
     // Method to add a new project and notify all listeners
     addProject(title: string, description: string, numOfPeople: number) {
@@ -135,12 +145,13 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
 }
 
 // ProjectItem Class
-class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
+class ProjectItem extends Component<HTMLUListElement, HTMLLIElement>
+    implements Draggable {
     private project: Project;
 
-    get persons(){
-        if(this.project.people===1)
-        return '1 Person';
+    get persons() {
+        if (this.project.people === 1)
+            return '1 Person';
         return `${this.project.people} Persons`;
     }
 
@@ -152,7 +163,19 @@ class ProjectItem extends Component<HTMLUListElement, HTMLLIElement> {
         this.renderContent();
     }
 
-    configure() { };
+    dragStartHandler(event: DragEvent): void {
+        console.log(event);
+    }
+
+    dragEndHandler(_: DragEvent): void {
+        console.log("drag end")
+    }
+
+    configure() {
+        this.element.addEventListener('dragstart', this.dragStartHandler.bind(this))
+        this.element.addEventListener('dragend', this.dragEndHandler.bind(this))
+    };
+
     renderContent() {
         this.element.querySelector('h2')!.textContent = this.project.title;
         this.element.querySelector('h3')!.textContent = this.persons + ' assigned.';
@@ -166,9 +189,7 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 
     constructor(private type: 'active' | 'finished') {
         super('project-list', 'app', false, `${type}-projects`);
-
         this.assignedProjects = [];
-
 
         this.configure();
         this.renderContent();
@@ -201,11 +222,9 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
         // Display each project title in a list item
         listElement.innerHTML = '';
         for (const projectItem of this.assignedProjects) {
-            new ProjectItem(this.element.querySelector('ul')!.id,projectItem)
+            new ProjectItem(this.element.querySelector('ul')!.id, projectItem)
         }
     }
-
-
 }
 
 // Class for handling Project Input UI (Form for adding new projects)
@@ -230,7 +249,7 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
         this.element.addEventListener('submit', this.submitHandler.bind(this));
     }
 
-    renderContent() { }
+    renderContent() { };
 
     // Gathers and validates user input from the form
     private gatherUserInput(): [string, string, number] | void {
@@ -286,8 +305,6 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
             this.clearInputs();
         }
     }
-
-
 }
 
 // Create instances of the classes for input and project lists

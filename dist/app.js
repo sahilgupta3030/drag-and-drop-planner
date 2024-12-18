@@ -97,7 +97,16 @@ class ProjectItem extends Component {
         this.configure();
         this.renderContent();
     }
-    configure() { }
+    dragStartHandler(event) {
+        console.log(event);
+    }
+    dragEndHandler(_) {
+        console.log("drag end");
+    }
+    configure() {
+        this.element.addEventListener('dragstart', this.dragStartHandler.bind(this));
+        this.element.addEventListener('dragend', this.dragEndHandler.bind(this));
+    }
     ;
     renderContent() {
         this.element.querySelector('h2').textContent = this.project.title;
@@ -159,6 +168,7 @@ class ProjectInput extends Component {
         this.element.addEventListener('submit', this.submitHandler.bind(this));
     }
     renderContent() { }
+    ;
     // Gathers and validates user input from the form
     gatherUserInput() {
         const enteredTitle = this.titleInputElement.value;
