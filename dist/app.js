@@ -84,6 +84,28 @@ class Component {
         this.hostElement.insertAdjacentElement(insertAtBeginning ? 'afterbegin' : 'beforeend', this.element);
     }
 }
+// ProjectItem Class
+class ProjectItem extends Component {
+    get persons() {
+        if (this.project.people === 1)
+            return '1 Person';
+        return `${this.project.people} Persons`;
+    }
+    constructor(hostId, project) {
+        super('single-project', hostId, false, project.id);
+        this.project = project;
+        this.configure();
+        this.renderContent();
+    }
+    configure() { }
+    ;
+    renderContent() {
+        this.element.querySelector('h2').textContent = this.project.title;
+        this.element.querySelector('h3').textContent = this.persons + ' assigned.';
+        this.element.querySelector('p').textContent = this.project.description;
+    }
+    ;
+}
 // Class for handling Project List
 class ProjectList extends Component {
     constructor(type) {
@@ -118,9 +140,7 @@ class ProjectList extends Component {
         // Display each project title in a list item
         listElement.innerHTML = '';
         for (const projectItem of this.assignedProjects) {
-            const listItem = document.createElement('li');
-            listItem.textContent = projectItem.title;
-            listElement.appendChild(listItem);
+            new ProjectItem(this.element.querySelector('ul').id, projectItem);
         }
     }
 }
