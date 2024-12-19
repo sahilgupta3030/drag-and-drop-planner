@@ -1,15 +1,5 @@
-// Validation logic for input fields (title, description, etc.)
-export interface Validatable {
-    value: string | number;
-    required?: boolean;
-    minLength?: number;
-    maxLength?: number;
-    min?: number;
-    max?: number;
-}
-
 // Validation function for inputs
-export function validate(validatableInput: Validatable) {
+export function validate(validatableInput) {
     let isValid = true;
     if (validatableInput.required) {
         isValid = isValid && validatableInput.value.toString().trim().length !== 0;
@@ -28,3 +18,4 @@ export function validate(validatableInput: Validatable) {
     }
     return isValid;
 }
+//# sourceMappingURL=validation.js.map
